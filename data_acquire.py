@@ -14,11 +14,14 @@ utils.setup_logger(logger, 'data.log')
 
 class data_acquire:
     LOCATION = 'Providence'
-    DOWNLOAD_PERIOD = 20         # second
+    DOWNLOAD_PERIOD = 15         # second
 
+    @staticmethod
     def process_location(city, state):
         return ('{},{}'.format(city, state)).replace(' ', '+').lower()
 
+
+    @staticmethod
     def process_date_historical(date_year, date_month, date_day, enddate_year, enddate_month, enddate_day):
         '''
         return list of dates --- yyyy-MM-dd
@@ -46,6 +49,7 @@ class data_acquire:
         return dates
 
 
+    @staticmethod
     def load_historical_data(location, dates):
         '''
         dates: list of date --- yyyy-MM-dd
@@ -129,6 +133,7 @@ class data_acquire:
         return df_day, df_hourly
 
 
+    @staticmethod
     def load_forecast_data(location, num_of_days=7, num_of_hours=24):
         '''
         dates: location
@@ -137,6 +142,8 @@ class data_acquire:
         return: df_daily_forecast
                 df_hourly_forecast
         '''
+        data_acquire.LOCATION = location
+
         interval = 1
         url = 'http://api.worldweatheronline.com/premium/v1/weather.ashx'
         key = '8fefb61db8a241c4b7524155190612'
@@ -169,6 +176,7 @@ class data_acquire:
         need_hour_data = True
 
         hourly_data = []
+        hourly_data.append(True)
         hourly_data.append(city)
         hourly_data.append(curr_datetime)
         hourly_data.append(curr_condition['temp_C'])
@@ -211,10 +219,11 @@ class data_acquire:
                 result_hourly = day_weather['hourly']
                 start = 0
                 if day == 0:
-                    start = curr_hour
+                    start = curr_hour+1
                 for hour in range(start, len(result_hourly)):
                     result_hour = result_hourly[hour]
                     hourly_data = []
+                    hourly_data.append(False)
                     hourly_data.append(city)
                     date_time = '{}-{}'.format(day_weather['date'], hour)
                     hourly_data.append(pd.to_datetime(date_time, format='%Y-%m-%d-%H'))
@@ -239,22 +248,24 @@ class data_acquire:
         df_daily_forecast = pd.DataFrame(res_daily_data, columns = ['city', 'datetime', 'sunrise', 'sunset', 'moonrise', 'moonset', 'moon_phase',
                                                                     'moon_illumination', 'maxtempC', 'maxtempF', 'mintempC', 'mintempF',
                                                                      'totalSnow_cm', 'sunHour', 'uvIndex'])
-        df_hourly_forecast = pd.DataFrame(res_hourly_data, columns = ['city', 'datetime', 'tempC', 'tempF', 'windspeedMiles', 'windspeedKmph', 
+        df_hourly_forecast = pd.DataFrame(res_hourly_data, columns = ['current', 'city', 'datetime', 'tempC', 'tempF', 'windspeedMiles', 'windspeedKmph', 
                                                                       'winddirDegree', 'winddir16Point', 'precipMM', 'precipInches', 'humidity',
                                                                       'visibility', 'visibilityMiles', 'uvIndex'])
         return df_daily_forecast, df_hourly_forecast
 
+    @staticmethod
     def update_forecast_once():
-        df_daily_forecast, df_hourly_forecast = load_forecast_data(LOCATION)
+        df_daily_forecast, df_hourly_forecast = data_acquire.load_forecast_data(data_acquire.LOCATION)
         upsert_forecast_data(df_daily_forecast, df_hourly_forecast)
 
 
+    @staticmethod
     def main_loop(timeout=DOWNLOAD_PERIOD):
         scheduler = sched.scheduler(time.time, time.sleep)
 
         def _worker():
             try:
-                update_forecast_once()
+                data_acquire.update_forecast_once()
             except Exception as e:
                 logger.warning("main loop worker ignores exception and continues: {}".format(e))
             scheduler.enter(timeout, 1, _worker)    # schedule the next event
@@ -264,3 +275,4 @@ class data_acquire:
 
 if __name__ == '__main__':
     data_acquire.main_loop()
+
