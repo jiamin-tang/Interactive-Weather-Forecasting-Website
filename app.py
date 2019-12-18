@@ -3,8 +3,10 @@ import dash_core_components as dcc
 import dash_html_components as html
 import numpy as np
 import plotly.graph_objects as go
+import dash_table
+import pandas as pd
 
-from database import fetch_data_as_df
+#from database import fetch_data_as_df
 
 # Definitions of constants. This projects uses extra CSS stylesheet at `./assets/style.css`
 COLORS = ['rgb(67,67,67)', 'rgb(115,115,115)', 'rgb(49,130,189)', 'rgb(189,189,189)']
@@ -13,7 +15,7 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', '/assets/s
 # Define the dash app first
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-df_day, df_hourly = fetch_data_as_df()
+#df_day, df_hourly = fetch_data_as_df()
 
 # Define component functions
 
@@ -60,6 +62,60 @@ def description():
         The [data source](https://transmission.bpa.gov/business/operations/Wind/baltwg.aspx) 
         **updates every 5 minutes**. 
         ''', className='eleven columns', style={'paddingLeft': '5%'})], className="row")
+
+def choose_unit():
+    return html.Div(children=[
+        dcc.Markdown('''Select a measurement unit'''),
+        dcc.RadioItems(
+                options=[
+                    {'label': 'C', 'value': 'tempC'},
+                    {'label': 'F', 'value': 'tempF'},
+                ],
+                value='tempC'
+            )
+    ],style={'width': '300px', 'marginLeft': '90px', 'display': 'inline-block'})
+
+df_table = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/solar.csv') #Change city when available
+def weather_table():
+    return html.Div(children=[
+        dcc.Markdown('''Weather information of related days''', className='row',style={'paddingLeft': '30%'}),
+        dash_table.DataTable(
+            id='table',
+            columns=[{"name": i, "id": i} for i in df_table.columns],
+            data=df_table.to_dict('records'),
+            style_header={'backgroundColor': 'rgb(30, 30, 30)'},
+            style_cell={
+                'backgroundColor': 'rgb(50, 50, 50)',
+                'color': 'white',
+            },
+        )
+    ],style={'marginTop': '2rem', 'width': '500px', 'marginLeft': '200px', 'display': 'inline-block'})
+
+
+df = pd.read_csv('uscities.csv')
+all_states = df['state_id'].unique()
+all_options = {state:[city for city in df[df['state_id'] == state]['city']] for state in all_states}
+def select_city():
+    """Select the state and city the user wants to enquire"""
+    return html.Div(children=[
+        html.Div(children=[
+        html.Div(children=[
+        dcc.Markdown('''Select a state'''),
+        dcc.Dropdown(
+            id='states-dropdown',
+            options=[{'label': k, 'value': k} for k in all_options.keys()],
+            value='RI',
+            multi=False,
+            style={'height': '30px', 'width': '300px'}
+        )], style={'width': '300px', 'marginLeft': '90px', 'display': 'inline-block'}),
+
+        html.Div(children=[
+        dcc.Markdown('''Select a city'''),
+        dcc.Dropdown(
+            id='cities-dropdown',
+            style={'height': '30px', 'width': '300px'}
+        )], style={'width': '300px', 'align': 'right', 'marginLeft': '400px', 'display': 'inline-block'})
+        ])])
 
 
 def daily_static_stacked_trend_graph(stack=False):
@@ -171,10 +227,13 @@ def dynamic_layout():
         page_header(),
         html.Hr(),
         description(),
+        choose_unit(),
+        select_city(),
+        weather_table(),
         # dcc.Graph(id='trend-graph', figure=static_stacked_trend_graph(stack=False)),
-        dcc.Graph(id='stacked-trend-graph', figure=daily_static_stacked_trend_graph(stack=True)),
-        what_if_description(),
-        what_if_tool(),
+        #dcc.Graph(id='stacked-trend-graph', figure=daily_static_stacked_trend_graph(stack=True)),
+        #what_if_description(),
+        #what_if_tool(),
         architecture_summary(),
     ], className='row', id='content')
 
@@ -182,46 +241,17 @@ def dynamic_layout():
 # set layout to a function which updates upon reloading
 app.layout = dynamic_layout
 
-
-# Defines the dependencies of interactive components
+@app.callback(
+    dash.dependencies.Output('cities-dropdown', 'options'),
+    [dash.dependencies.Input('states-dropdown', 'value')])
+def set_cities_options(selected_state):
+    return [{'label': i, 'value': i} for i in all_options[selected_state]]
 
 @app.callback(
-    dash.dependencies.Output('wind-scale-text', 'children'),
-    [dash.dependencies.Input('wind-scale-slider', 'value')])
-def update_wind_sacle_text(value):
-    """Changes the display text of the wind slider"""
-    return "Wind Power Scale {:.2f}x".format(value)
-
-
-@app.callback(
-    dash.dependencies.Output('hydro-scale-text', 'children'),
-    [dash.dependencies.Input('hydro-scale-slider', 'value')])
-def update_hydro_sacle_text(value):
-    """Changes the display text of the hydro slider"""
-    return "Hydro Power Scale {:.2f}x".format(value)
-
-
-
-@app.callback(
-    dash.dependencies.Output('what-if-figure', 'figure'),
-    [dash.dependencies.Input('wind-scale-slider', 'value'),
-     dash.dependencies.Input('hydro-scale-slider', 'value')])
-def what_if_handler(wind, hydro):
-    """Changes the display graph of supply-demand"""
-    x = df_day['datetime']
-    supply = df_day('avgtempC')
-    load = df_day['avgtempF']
-
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=x, y=supply, mode='none', name='supply', line={'width': 2, 'color': 'pink'},
-                  fill='tozeroy'))
-    fig.add_trace(go.Scatter(x=x, y=load, mode='none', name='emand', line={'width': 2, 'color': 'orange'},
-                  fill='tonexty'))
-    fig.update_layout(template='plotly_dark', title='Supply/Demand after Power Scaling',
-                      plot_bgcolor='#23272c', paper_bgcolor='#23272c', yaxis_title='MW',
-                      xaxis_title='Date/Time')
-    return fig
-
+    dash.dependencies.Output('cities-dropdown', 'value'),
+    [dash.dependencies.Input('cities-dropdown', 'options')])
+def set_cities_value(available_options):
+    return available_options[0]['value']
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=1050, host='0.0.0.0')
