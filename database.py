@@ -44,7 +44,7 @@ def upsert_historical(df_day, df_hourly):
                 "insert={}".format(df_hourly.shape[0]-update_count_hourly))
 
 
-def fetch_data_as_df():
+def fetch_data():
     db = client.get_database("weather")
     collection_daily = db.get_collection("daily_weather")
     collection_hourly = db.get_collection("hourly_weather")
@@ -92,9 +92,9 @@ def fetch_all_data_as_df(allow_cached=False):
     _fetch_all_data_as_df_cache['cache'] = ret
     return ret
 '''
-'''
-def _work():
-    data_daily, data_hourly = fetch_all_data()
+
+def fetch_data_as_df():
+    data_daily, data_hourly = fetch_data()
     if len(data_daily) == 0 or len(data_hourly) == 0:
         return None, None
     df_daily = pd.DataFrame.from_records(data_daily)
@@ -104,11 +104,13 @@ def _work():
     df_hourly.drop('_id', axis=1, inplace=True)
 
     return df_daily, df_hourly
-'''
+
 
 if __name__ == '__main__':
     location = 'providence'
     dates = process_date_historical(2019, 2, 27, 2019, 3, 5)
     df_day, df_hourly = load_historical_data(location, dates)
     upsert_historical(df_day, df_hourly)
-    print(fetch_data_as_df())
+    df_day, df_hourly = fetch_data_as_df()
+    print(df_day.head())
+    print(df_hourly.head())
