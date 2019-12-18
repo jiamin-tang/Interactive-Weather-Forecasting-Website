@@ -68,7 +68,7 @@ def daily_static_stacked_trend_graph(stack=False):
     If `stack` is `True`, the 4 power sources are stacked together to show the overall power
     production.
     """
-    df_day, df_hourly = fetch_data_as_df()
+    df_day, df_hourly = fetch_historical_data_as_df()
     if df_day is None:
         print('df_day None')
         return go.Figure()
