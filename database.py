@@ -4,13 +4,12 @@ import pandas as pd
 #import expiringdict
 import utils
 
-from data_acquire import process_date_historical, load_historical_data
+from data_acquire import process_location, process_date_historical, load_historical_data, load_forecast_data
 
 client = pymongo.MongoClient()
 logger = logging.Logger(__name__)
 utils.setup_logger(logger, 'database.log')
 #RESULT_CACHE_EXPIRATION = 10             # seconds
-
 
 def upsert_historical(df_day, df_hourly):
     """
@@ -44,7 +43,7 @@ def upsert_historical(df_day, df_hourly):
                 "insert={}".format(df_hourly.shape[0]-update_count_hourly))
 
 
-def fetch_data():
+def fetch_historical_data():
     db = client.get_database("weather")
     collection_daily = db.get_collection("daily_weather")
     collection_hourly = db.get_collection("hourly_weather")
@@ -53,6 +52,19 @@ def fetch_data():
     logger.info('Daily weather: ' + str(len(ret_daily)) + ' documents read from the db')
     logger.info('Hourly weather: ' + str(len(ret_hourly)) + ' documents read from the db')
     return ret_daily, ret_hourly
+
+
+def fetch_historical_data_as_df():
+    data_daily, data_hourly = fetch_historical_data()
+    if len(data_daily) == 0 or len(data_hourly) == 0:
+        return None, None
+    df_daily = pd.DataFrame.from_records(data_daily)
+    df_daily.drop('_id', axis=1, inplace=True)
+
+    df_hourly = pd.DataFrame.from_records(data_hourly)
+    df_hourly.drop('_id', axis=1, inplace=True)
+
+    return df_daily, df_hourly
 
 '''
 _fetch_all_bpa_as_df_cache = expiringdict.ExpiringDict(max_len=1,
@@ -92,18 +104,6 @@ def fetch_all_data_as_df(allow_cached=False):
     _fetch_all_data_as_df_cache['cache'] = ret
     return ret
 '''
-
-def fetch_data_as_df():
-    data_daily, data_hourly = fetch_data()
-    if len(data_daily) == 0 or len(data_hourly) == 0:
-        return None, None
-    df_daily = pd.DataFrame.from_records(data_daily)
-    df_daily.drop('_id', axis=1, inplace=True)
-
-    df_hourly = pd.DataFrame.from_records(data_hourly)
-    df_hourly.drop('_id', axis=1, inplace=True)
-
-    return df_daily, df_hourly
 
 
 if __name__ == '__main__':

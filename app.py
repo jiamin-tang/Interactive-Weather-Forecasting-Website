@@ -4,7 +4,7 @@ import dash_html_components as html
 import numpy as np
 import plotly.graph_objects as go
 
-from database import fetch_all_bpa_as_df
+from database import fetch_data_as_df
 
 # Definitions of constants. This projects uses extra CSS stylesheet at `./assets/style.css`
 COLORS = ['rgb(67,67,67)', 'rgb(115,115,115)', 'rgb(49,130,189)', 'rgb(189,189,189)']
@@ -13,6 +13,7 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', '/assets/s
 # Define the dash app first
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
+df_day, df_hourly = fetch_data_as_df()
 
 # Define component functions
 
@@ -61,33 +62,33 @@ def description():
         ''', className='eleven columns', style={'paddingLeft': '5%'})], className="row")
 
 
-def static_stacked_trend_graph(stack=False):
+def daily_static_stacked_trend_graph(stack=False):
     """
     Returns scatter line plot of all power sources and power load.
     If `stack` is `True`, the 4 power sources are stacked together to show the overall power
     production.
     """
-    df = fetch_all_bpa_as_df()
-    if df is None:
+    df_day, df_hourly = fetch_data_as_df()
+    if df_day is None:
+        print('df_day None')
         return go.Figure()
-    sources = ['Wind', 'Hydro', 'Fossil/Biomass', 'Nuclear']
-    x = df['Datetime']
+    sources = ['avgtempC', 'avgtempF', 'sunHour', 'uvIndex']
+    x = df_day['datetime']
     fig = go.Figure()
     for i, s in enumerate(sources):
-        fig.add_trace(go.Scatter(x=x, y=df[s], mode='lines', name=s,
-                                 line={'width': 2, 'color': COLORS[i]},
-                                 stackgroup='stack' if stack else None))
-    fig.add_trace(go.Scatter(x=x, y=df['Load'], mode='lines', name='Load',
-                             line={'width': 2, 'color': 'orange'}))
-    title = 'Energy Production & Consumption under BPA Balancing Authority'
+        fig.add_trace(go.Scatter(x=x, y=df_day[s], mode='lines', name=s,
+                                 line={'width': 2, 'color': COLORS[i]}))
+    #fig.add_trace(go.Scatter(x=x, y=df['Load'], mode='lines', name='Load',
+    #                        line={'width': 2, 'color': 'orange'}))
+    title = 'Daily Weather Visualization'
     if stack:
         title += ' [Stacked]'
     fig.update_layout(template='plotly_dark',
                       title=title,
                       plot_bgcolor='#23272c',
                       paper_bgcolor='#23272c',
-                      yaxis_title='MW',
-                      xaxis_title='Date/Time')
+                      yaxis_title='',
+                      xaxis_title='Date')
     return fig
 
 
@@ -107,6 +108,9 @@ def what_if_description():
         playing with other interesting aspects of the problem (e.g. instability of load).
         ''', className='eleven columns', style={'paddingLeft': '5%'})
     ], className="row")
+
+
+
 
 
 def what_if_tool():
@@ -168,7 +172,7 @@ def dynamic_layout():
         html.Hr(),
         description(),
         # dcc.Graph(id='trend-graph', figure=static_stacked_trend_graph(stack=False)),
-        dcc.Graph(id='stacked-trend-graph', figure=static_stacked_trend_graph(stack=True)),
+        dcc.Graph(id='stacked-trend-graph', figure=daily_static_stacked_trend_graph(stack=True)),
         what_if_description(),
         what_if_tool(),
         architecture_summary(),
@@ -204,15 +208,14 @@ def update_hydro_sacle_text(value):
      dash.dependencies.Input('hydro-scale-slider', 'value')])
 def what_if_handler(wind, hydro):
     """Changes the display graph of supply-demand"""
-    df = fetch_all_bpa_as_df(allow_cached=True)
-    x = df['Datetime']
-    supply = df['Wind'] * wind + df['Hydro'] * hydro + df['Fossil/Biomass'] + df['Nuclear']
-    load = df['Load']
+    x = df_day['datetime']
+    supply = df_day('avgtempC')
+    load = df_day['avgtempF']
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=x, y=supply, mode='none', name='supply', line={'width': 2, 'color': 'pink'},
                   fill='tozeroy'))
-    fig.add_trace(go.Scatter(x=x, y=load, mode='none', name='demand', line={'width': 2, 'color': 'orange'},
+    fig.add_trace(go.Scatter(x=x, y=load, mode='none', name='emand', line={'width': 2, 'color': 'orange'},
                   fill='tonexty'))
     fig.update_layout(template='plotly_dark', title='Supply/Demand after Power Scaling',
                       plot_bgcolor='#23272c', paper_bgcolor='#23272c', yaxis_title='MW',

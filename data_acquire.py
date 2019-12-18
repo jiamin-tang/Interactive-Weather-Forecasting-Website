@@ -4,6 +4,7 @@ import requests
 import datetime
 import utils
 import string
+import socket
 #import time
 #import sched
 #from io import StringIO
@@ -11,7 +12,7 @@ import string
 
 #MAX_DOWNLOAD_ATTEMPT = 5
 #DOWNLOAD_PERIOD = 10         # second
-
+LOCATION = 'Povidence'
 logger = logging.Logger(__name__)
 utils.setup_logger(logger, 'data.log')
 
@@ -68,8 +69,8 @@ def load_historical_data(location, dates):
         paras['tp'] = interval
         
         r = requests.get(url, paras)
-        r.raise_for_status()                                ### try and except? ###
-        
+        r.raise_for_status()                             ### try and except? ### 
+   
         city = r.json()['data']['request'][0]['query']
         result = r.json()['data']['weather'][0]
         
@@ -125,42 +126,115 @@ def load_historical_data(location, dates):
     df_hourly = pd.DataFrame(days_hourly_data, columns = ['city', 'datetime', 'tempC', 'tempF', 'windspeedMiles', 'windspeedKmph', 
                                                         'winddirDegree', 'winddir16Point', 'weatherDesc', 'precipMM', 
                                                         'precipInches', 'humidity', 'visibility', 'visibilityMiles', 'cloudcover', 'uvIndex'])
-    
     return df_day, df_hourly
 
-'''
-demo project里原来就有的 不知道有没有用
-def update_once():
-    t = download_bpa()
-    df = filter_bpa(t)
-    upsert_bpa(df)
 
-def main_loop(timeout=DOWNLOAD_PERIOD):
-    scheduler = sched.scheduler(time.time, time.sleep)
+def load_forecast_data(location):
+    '''
+    dates: location
+    return: df_daily_forecast
+            df_hourly_forecast
+    '''
+    interval = 1
+    url = 'http://api.worldweatheronline.com/premium/v1/weather.ashx'
+    key = '8fefb61db8a241c4b7524155190612'
+    fm = 'json'
+    num_of_days = 15
+    show_comments = 'no'
+    show_local_time = 'yes'
+    
+    paras = dict()
+    paras['key'] = key
+    paras['format'] = fm
+    paras['q'] = location
+    paras['tp'] = interval
+    paras['num_of_days'] = num_of_days
+    paras['show_comments'] = show_comments
+    paras['showlocaltime'] = show_local_time
 
-    def _worker():
-        try:
-            update_once()
-        except Exception as e:
-            logger.warning("main loop worker ignores exception and continues: {}".format(e))
-        scheduler.enter(timeout, 1, _worker)    # schedule the next event
+    res = requests.get(url, paras)
+    res.raise_for_status()
 
-    scheduler.enter(0, 1, _worker)              # start the first event
-    scheduler.run(blocking=True)
+    res_hourly_data = []
+    res_daily_data = []
+
+    r = res.json()
+    city = r['data']['request'][0]['query']
+    curr_time = r['data']['time_zone'][0]['localtime']
+    curr_datetime = pd.to_datetime(curr_time, format='%Y-%m-%d %H:%M')
+    curr_condition = r['data']['current_condition'][0]
+
+    hourly_data = []
+    hourly_data.append(city)
+    hourly_data.append(curr_datetime)
+    hourly_data.append(curr_condition['temp_C'])
+    hourly_data.append(curr_condition['temp_F'])
+    hourly_data.append(curr_condition['windspeedMiles'])
+    hourly_data.append(curr_condition['windspeedKmph'])
+    hourly_data.append(curr_condition['winddirDegree'])
+    hourly_data.append(curr_condition['winddir16Point'])
+    hourly_data.append(curr_condition['precipMM'])
+    hourly_data.append(curr_condition['precipInches'])
+    hourly_data.append(curr_condition['humidity'])
+    hourly_data.append(curr_condition['visibility'])
+    hourly_data.append(curr_condition['visibilityMiles'])
+    hourly_data.append(curr_condition['uvIndex'])
+    res_hourly_data.append(hourly_data)
+
+    for day in range(len(r['data']['weather'])):
+        day_weather = r['data']['weather'][day]
+        day_data = []
+        day_data.append(city)
+        day_data.append(pd.to_datetime(day_weather['date'], format='%Y-%m-%d'))
+        day_data.append(day_weather['astronomy'][0]['sunrise'])
+        day_data.append(day_weather['astronomy'][0]['sunset'])
+        day_data.append(day_weather['astronomy'][0]['moonrise'])
+        day_data.append(day_weather['astronomy'][0]['moonset'])
+        day_data.append(day_weather['astronomy'][0]['moon_phase'])
+        day_data.append(day_weather['astronomy'][0]['moon_illumination'])
+        day_data.append(day_weather['maxtempC'])
+        day_data.append(day_weather['maxtempF'])
+        day_data.append(day_weather['mintempC'])
+        day_data.append(day_weather['mintempF'])
+        day_data.append(day_weather['avgtempC'])
+        day_data.append(day_weather['avgtempF'])
+        day_data.append(day_weather['totalSnow_cm'])
+        day_data.append(day_weather['sunHour'])
+        day_data.append(day_weather['uvIndex'])
+        res_daily_data.append(day_data)
+
+        result_hourly = day_weather['hourly']
+        for hour in range(len(result_hourly)):
+            result_hour = result_hourly[hour]
+            hourly_data = []
+            hourly_data.append(city)
+            date_time = '{}-{}'.format(day_weather['date'], hour)
+            hourly_data.append(pd.to_datetime(date_time, format='%Y-%m-%d-%H'))
+            hourly_data.append(result_hour['tempC'])
+            hourly_data.append(result_hour['tempF'])
+            hourly_data.append(result_hour['windspeedMiles'])
+            hourly_data.append(result_hour['windspeedKmph'])
+            hourly_data.append(result_hour['winddirDegree'])
+            hourly_data.append(result_hour['winddir16Point'])
+            hourly_data.append(result_hour['precipMM'])
+            hourly_data.append(result_hour['precipInches'])
+            hourly_data.append(result_hour['humidity'])
+            hourly_data.append(result_hour['visibility'])
+            hourly_data.append(result_hour['visibilityMiles'])
+            hourly_data.append(result_hour['uvIndex'])
+            res_hourly_data.append(hourly_data)
+
+    df_daily_forecast = pd.DataFrame(res_daily_data, columns = ['city', 'datetime', 'sunrise', 'sunset', 'moonrise', 'moonset', 'moon_phase', 'moon_illumination',
+                                                'maxtempC', 'maxtempF', 'mintempC', 'mintempF', 'avgtempC', 'avgtempF', 'totalSnow_cm',
+                                                'sunHour', 'uvIndex'])
+    df_hourly_forecast = pd.DataFrame(res_hourly_data, columns = ['city', 'datetime', 'tempC', 'tempF', 'windspeedMiles', 'windspeedKmph', 
+                                                          'winddirDegree', 'winddir16Point', 'precipMM', 'precipInches', 'humidity',
+                                                          'visibility', 'visibilityMiles', 'uvIndex'])
+    return df_daily_forecast, df_hourly_forecast
+    
 
 
 if __name__ == '__main__':
-    main_loop()
-'''
-
-if __name__ == '__main__':
-    #################### Testing ####################
-    #location = 'New York'
-    #query_location = process_location(location)
-    #location = '40.816, -73.902'
-    dates = process_date_historical(2019, 7, 9, 2019, 7, 10)
-    df_day, df_hourly = load_historical_data(location, dates)
-    #df_day.to_csv('data/daily_weather.csv')
-    #df_hourly.to_csv('data/hourly_weather.csv')
-    #print(df_day.head())
-    #print(df_hourly.head())
+   df_daily_forecast, df_hourly_forecast = load_forecast_data('providence')
+   df_daily_forecast.to_csv('daily_forecast.csv')
+   df_hourly_forecast.to_csv('hourly_forecast.csv')
