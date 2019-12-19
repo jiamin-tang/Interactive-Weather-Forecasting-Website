@@ -144,7 +144,7 @@ def load_forecast_data(location, num_of_days=7, num_of_hours=24):
 
     interval = 1
     url = 'http://api.worldweatheronline.com/premium/v1/weather.ashx'
-    key = '8fefb61db8a241c4b7524155190612'
+    key = 'ddc7eb4778ba48e69e825031190612'
     fm = 'json'
     show_comments = 'no'
     show_local_time = 'yes'
@@ -179,15 +179,7 @@ def load_forecast_data(location, num_of_days=7, num_of_hours=24):
     hourly_data.append(curr_datetime)
     hourly_data.append(curr_condition['temp_C'])
     hourly_data.append(curr_condition['temp_F'])
-    hourly_data.append(curr_condition['windspeedMiles'])
-    hourly_data.append(curr_condition['windspeedKmph'])
-    hourly_data.append(curr_condition['winddirDegree'])
-    hourly_data.append(curr_condition['winddir16Point'])
     hourly_data.append(curr_condition['precipMM'])
-    hourly_data.append(curr_condition['precipInches'])
-    hourly_data.append(curr_condition['humidity'])
-    hourly_data.append(curr_condition['visibility'])
-    hourly_data.append(curr_condition['visibilityMiles'])
     hourly_data.append(curr_condition['uvIndex'])
     res_hourly_data.append(hourly_data)
     hour_count += 1
@@ -260,5 +252,7 @@ def main_loop(timeout=DOWNLOAD_PERIOD):
     scheduler.run(blocking=True)
 
 if __name__ == '__main__':
-    main_loop()
+    #main_loop()
+    df_daily_forecast, df_hourly_forecast = load_forecast_data('Providence')
+    upsert_forecast_data(df_daily_forecast, df_hourly_forecast)
 
