@@ -64,8 +64,9 @@ def description():
 
 
 #df_table = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/solar.csv') #Change city when available
+df_table = df_daily_forecast
 def weather_table():
-    df_table = df_daily_forecast
+    df_static_table.drop
     return html.Div(children=[
         dcc.Markdown('''New York Weather Forecast''', className='row',style={'paddingLeft': '30%'}),
         dash_table.DataTable(
@@ -97,7 +98,7 @@ def weather_table_interactive():
 
 
 df = pd.read_csv('uscities.csv')
-all_states = sorted(df['state_name'].unique())
+all_states = sorted(df['state_id'].unique())
 all_options = {state:[city for city in df[df['state_id'] == state]['city']] for state in all_states}
 def select_city():
     """Select the state and city the user wants to enquire"""
