@@ -33,7 +33,7 @@ def upsert_forecast_data(df_daily_forecast, df_hourly_forecast):
     update_count_hourly = 0
     for record in df_hourly_forecast.to_dict('records'):
         result1 = collection_hourly.replace_one(
-            filter={datetime': record['datetime']},    # locate the document if exists
+            filter={'datetime': record['datetime']},    # locate the document if exists
             replacement=record,                         # latest document
             upsert=True)                                # update if exists, insert if not
         if result1.matched_count > 0:
