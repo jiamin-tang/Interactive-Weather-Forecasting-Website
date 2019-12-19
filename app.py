@@ -14,9 +14,7 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', '/assets/s
 
 # Define the dash app first
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
 df_daily_forecast, df_hourly_forecast = fetch_forecast_data_as_df()
-
 # Define component functions
 
 
@@ -77,7 +75,7 @@ def choose_unit():
     ],style={'width': '300px', 'marginLeft': '90px', 'display': 'inline-block'})
 
 #df_table = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/solar.csv') #Change city when available
-df_table = df_daily_forecast
+df_table = df_hourly_forecast
 def weather_table():
     return html.Div(children=[
         dcc.Markdown('''Weather information of related days''', className='row',style={'paddingLeft': '30%'}),
