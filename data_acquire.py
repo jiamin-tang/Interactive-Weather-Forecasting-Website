@@ -185,7 +185,6 @@ def load_forecast_data(location, num_of_days=7, num_of_hours=24):
     for day in range(len(r['data']['weather'])):
         day_weather = r['data']['weather'][day]
         day_data = []
-        day_data.append(city)
         day_data.append(pd.to_datetime(day_weather['date'], format='%Y-%m-%d'))
         day_data.append(day_weather['astronomy'][0]['sunrise'])
         day_data.append(day_weather['astronomy'][0]['sunset'])
