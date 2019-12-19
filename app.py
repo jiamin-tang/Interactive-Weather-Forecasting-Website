@@ -92,7 +92,6 @@ def hourly_static_stacked_trend_graph(stack=False):
     """
     df_static_hourly_forecast = fetch_forecast_data_as_df()[1]
     if df_static_hourly_forecast is None:
-        print('Data Cannot be retrieved')
         return go.Figure()
     sources = ['tempC', 'tempF', 'precipMM', 'uvIndex']
     x = df_static_hourly_forecast['datetime']
@@ -101,8 +100,6 @@ def hourly_static_stacked_trend_graph(stack=False):
         fig.add_trace(go.Scatter(x=x, y=df_static_hourly_forecast[s], mode='lines', name=s,
                                  line={'width': 2, 'color': COLORS[i]}))
     title = '24-Hour New York Weather Forecast'
-    if stack:
-        title += ' [Stacked]'
     fig.update_layout(template='plotly_dark',
                       title=title,
                       plot_bgcolor='#23272c',
@@ -114,16 +111,15 @@ def hourly_static_stacked_trend_graph(stack=False):
 
 cols = ['datetime', 'sunrise', 'sunset', 'moonrise', 'moonset', 'moon_phase',
                             'moon_illumination', 'tempC', 'tempF', 'sunHour', 'uvIndex']
-empty_data = {col:['-----']*7 for col in cols}
-df_initial_table = pd.DataFrame(data=empty_data)
-
+empty_data = {col:['']*7 for col in cols}
+df_interactive_daily_forecast = pd.DataFrame(data=empty_data)
 def weather_table_interactive():
     return html.Div(children=[
         dcc.Markdown('''Weather Forecast of Selected City''', className='row',style={'paddingLeft': '30%'}),
         dash_table.DataTable(
             id='table_interactive',
-            columns=[{"name": i, "id": i} for i in df_initial_table.columns],
-            data=df_initial_table.to_dict('records'),
+            columns=[{"name": i, "id": i} for i in df_interactive_daily_forecast.columns],
+            data=df_interactive_daily_forecast.to_dict('records'),
             style_header={'backgroundColor': 'rgb(30, 30, 30)'},
             style_cell={
                 'backgroundColor': 'rgb(50, 50, 50)',
@@ -131,29 +127,6 @@ def weather_table_interactive():
             },
         )
     ],style={'marginTop': '2rem', 'width': '500px', 'marginLeft': '200px', 'display': 'inline-block'})
-
-
-df_interactive_hourly_forecast = None
-
-def interative_hourly_weather_forecast_visulization():
-    if df_interactive_hourly_forecast is None:
-        return go.Figure()
-    sources = ['tempC', 'tempF', 'precipMM', 'uvIndex']
-    x = df_interactive_hourly_forecast['datetime']
-    fig = go.Figure()
-    for i, s in enumerate(sources):
-        fig.add_trace(go.Scatter(x=x, y=df_interactive_hourly_forecast[s], mode='lines', name=s,
-                                 line={'width': 2, 'color': COLORS[i]}))
-    title = '24-Hour Weather Forecast of selected city'
-    if stack:
-        title += ' [Stacked]'
-    fig.update_layout(template='plotly_dark',
-                      title=title,
-                      plot_bgcolor='#23272c',
-                      paper_bgcolor='#23272c',
-                      yaxis_title='',
-                      xaxis_title='Date')
-    return fig
 
 
 df = pd.read_csv('uscities.csv')
@@ -168,7 +141,7 @@ def select_city():
         dcc.Dropdown(
             id='states-dropdown',
             options=[{'label': k, 'value': k} for k in all_options.keys()],
-            value='Alaska',
+            value='',
             multi=False,
             style={'height': '30px', 'width': '300px'}
         )], style={'width': '300px', 'marginLeft': '90px', 'display': 'inline-block'}),
@@ -180,6 +153,49 @@ def select_city():
             style={'height': '30px', 'width': '300px'}
         )], style={'width': '300px', 'align': 'right', 'marginLeft': '400px', 'display': 'inline-block'})
         ])])
+
+def process_datetime(date_time):
+    return date_time.strftime(format='%Y-%m-%d')
+
+df_air = pd.read_csv('air_quality.csv')
+df_air.columns = ['datetime', 'Year', 'Concentration', 'UNITS','SITE_LATITUDE', 'SITE_LONGITUDE']
+df_air['datetime'] = pd.to_datetime(df_air['datetime'], format='%m/%d/%Y')
+df_air['datetime'].apply(process_datetime).unique()
+
+df_daily = pd.read_csv('daily_data.csv')
+df_daily['datetime'] = pd.to_datetime(df_daily['datetime'], format='%Y/%m/%d')
+df_daily['datetime'].apply(process_datetime)
+dfm = df_air.merge(df_daily,how='inner',on='datetime')
+
+def enhancement():
+    return html.Div([
+        html.Div([
+
+            html.Div([
+                dcc.Markdown('''Select a weather feature.'''),
+                dcc.Dropdown(
+                    id='xaxis-column',
+                    options=[{'label': i, 'value': i} for i in ['maxtempC', 'maxtempF', 'mintempC',
+                                                                'mintempF', 'avgtempC', 'avgtempF',
+                                                                'totalSnow_cm', 'sunHour','uvIndex']],
+                    value=''
+                ),
+            ],
+            style={'width': '48%', 'display': 'inline-block'}),
+        ]),
+
+        dcc.Graph(id='indicator-graphic'),
+
+        dcc.Slider(
+            id='year--slider',
+            min=dfm['Year'].min(),
+            max=dfm['Year'].max(),
+            value=dfm['Year'].max(),
+            marks={str(year): str(year) for year in dfm['Year'].unique()},
+            step=None
+        )
+    ])
+
 
 def architecture_summary():
     """
@@ -214,9 +230,10 @@ def dynamic_layout():
         html.Hr(),
         description(),
         weather_table(),
-        hourly_static_stacked_trend_graph(),
+        dcc.Graph(id='stacked-trend-graph', figure=hourly_static_stacked_trend_graph(True)),
         select_city(),
         weather_table_interactive(),
+        enhancement(),
         # dcc.Graph(id='trend-graph', figure=static_stacked_trend_graph(stack=False)),
         #dcc.Graph(id='stacked-trend-graph', figure=daily_static_stacked_trend_graph(stack=True)),
         #what_if_description(),
@@ -245,7 +262,38 @@ def set_cities_value(available_options):
     [dash.dependencies.Input('cities-dropdown', "value")])
 def update_table(city):
     df_interactive_daily_forecast, df_interactive_hourly_forecast = load_forecast_data(city)
-    return df_interactive_hourly_forecast.to_dict('records')
+    return df_interactive_daily_forecast.to_dict('records')
+
+@app.callback(
+    dash.dependencies.Output('indicator-graphic', 'figure'),
+    [dash.dependencies.Input('xaxis-column', 'value'),
+     dash.dependencies.Input('year--slider', 'value')])
+def update_graph(xaxis_column_name, year_value):
+    dff = dfm[dfm['Year'] == year_value]
+
+    return {
+        'data': [dict(
+            x=dff[xaxis_column_name],
+            y=dff['Concentration'],
+            text=dff['datetime'],
+            mode='markers',
+            marker={
+                'size': 10,
+                'opacity': 0.5,
+                'line': {'width': 0.5, 'color': 'white'}
+            }
+        )],
+        'layout': dict(
+            xaxis={
+                'title': xaxis_column_name,
+            },
+            yaxis={
+                'title': 'PM2.5 Concentration',
+            },
+            margin={'l': 40, 'b': 40, 't': 10, 'r': 0},
+            hovermode='closest'
+        )
+    }
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=1050, host='0.0.0.0')
