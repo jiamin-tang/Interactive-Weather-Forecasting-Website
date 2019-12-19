@@ -25,15 +25,15 @@ def page_header():
     Returns the page header as a dash `html.Div`
     """
     return html.Div(id='header', children=[
-        html.Div([html.H3('Visualization with datashader and Plotly')],
+        html.Div([html.H3('Weather Exploration with Air Quality')],
                  className="ten columns"),
         html.A([html.Img(id='logo', src=app.get_asset_url('github.png'),
                          style={'height': '35px', 'paddingTop': '7%'}),
-                html.Span('Blownhither', style={'fontSize': '2rem', 'height': '35px', 'bottom': 0,
+                html.Span('Shake Shake', style={'fontSize': '2rem', 'height': '35px', 'bottom': 0,
                                                 'paddingLeft': '4px', 'color': '#a3a7b0',
                                                 'textDecoration': 'none'})],
                className="two columns row",
-               href='https://github.com/blownhither/'),
+               href='https://github.com/yiweisang97/data1050-final-project-shake-shake/'),
     ], className="row")
 
 
@@ -42,25 +42,26 @@ def description():
     Returns overall project description in markdown
     """
     return html.Div(children=[dcc.Markdown('''
-        # Energy Planner
-        As of today, 138 cities in the U.S. have formally announced 100% renewable energy goals or
-        targets, while others are actively considering similar goals. Despite ambition and progress,
-        conversion towards renewable energy remains challenging.
+        # Weather Forecast
+        Weather impacts every facet of our daily life and is the most influential external factor
+        in the economy. Weather strategies involved in industries such as agriculture, retail, 
+        transportation, manufacturing, energy and utilities to anticipate and plan have boosted
+        in recent years. They contribute a lot to optimizing operations, reducing cost and excavating
+        new opportunities.
 
-        Wind and solar power are becoming more cost effective, but they will always be unreliable
-        and intermittent sources of energy. They follow weather patterns with potential for lots of
-        variability. Solar power starts to die away right at sunset, when one of the two daily peaks
-        arrives (see orange curve for load).
+        Accurate weather forecast helps ensure that we are prepared for the upcoming affairs. In this
+        case, our tool offers queries about cities in the United States. We provide both forecast in
+        next 24 hours and in the following 10 days to help you make better decisions.
 
-        **Energy Planner is a "What-If" tool to assist making power conversion plans.**
-        It can be used to explore load satisfiability under different power contribution with 
-        near-real-time energy production & consumption data.
-
+        Except for weather-related business, weather also has something to do with weather itself. We
+        look into air quality, more specifically, PM2.5, which is the air index that people care about
+        the most nowadays. We aim to explore if the combinations of weather features are strongly 
+        associated with air quality.
+        
         ### Data Source
-        Energy Planner utilizes near-real-time energy production & consumption data from [BPA 
-        Balancing Authority](https://www.bpa.gov/news/AboutUs/Pages/default.aspx).
-        The [data source](https://transmission.bpa.gov/business/operations/Wind/baltwg.aspx) 
-        **updates every 5 minutes**. 
+        In this case, we stay ahead of weather conditions through API from [World Weather Online]
+        (https://www.worldweatheronline.com/developer/api/docs/local-city-town-weather-api.aspx).
+        Weather data is gathered from 1st July, 2008 to present time and keeps updating.
         ''', className='eleven columns', style={'paddingLeft': '5%'})], className="row")
 
 def choose_unit():
