@@ -234,7 +234,6 @@ def update_forecast_once():
     upsert_forecast_data(df_daily_forecast, df_hourly_forecast)
 
 
-
 def main_loop(timeout=DOWNLOAD_PERIOD):
     scheduler = sched.scheduler(time.time, time.sleep)
 
@@ -249,7 +248,5 @@ def main_loop(timeout=DOWNLOAD_PERIOD):
     scheduler.run(blocking=True)
 
 if __name__ == '__main__':
-    df_daily_forecast, df_hourly_forecast = load_forecast_data('providence')
-    df_daily_forecast.to_csv('daily_weather.csv')
-    #main_loop()
+    main_loop()
 
