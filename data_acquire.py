@@ -80,6 +80,7 @@ def load_historical_data(location, dates):
         #################### day data ####################
         day_data = []
         day_data.append(city)
+
         day_data.append(pd.to_datetime(day, format='%Y-%m-%d'))
         day_data.append(result['astronomy'][0]['sunrise'])
         day_data.append(result['astronomy'][0]['sunset'])

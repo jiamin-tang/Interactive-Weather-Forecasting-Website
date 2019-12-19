@@ -14,7 +14,6 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', '/assets/s
 
 # Define the dash app first
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-df_daily_forecast, df_hourly_forecast = fetch_forecast_data_as_df()
 # Define component functions
 
 
