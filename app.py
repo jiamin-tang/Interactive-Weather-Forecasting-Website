@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 import dash_table
 import pandas as pd
 
-#from database import fetch_data_as_df
+from database import fetch_forecast_data_as_df
 
 # Definitions of constants. This projects uses extra CSS stylesheet at `./assets/style.css`
 COLORS = ['rgb(67,67,67)', 'rgb(115,115,115)', 'rgb(49,130,189)', 'rgb(189,189,189)']
@@ -15,7 +15,7 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', '/assets/s
 # Define the dash app first
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-#df_day, df_hourly = fetch_data_as_df()
+df_daily_forecast, df_hourly_forecast = fetch_forecast_data_as_df()
 
 # Define component functions
 
@@ -76,7 +76,8 @@ def choose_unit():
             )
     ],style={'width': '300px', 'marginLeft': '90px', 'display': 'inline-block'})
 
-df_table = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/solar.csv') #Change city when available
+#df_table = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/solar.csv') #Change city when available
+df_table = df_daily_forecast
 def weather_table():
     return html.Div(children=[
         dcc.Markdown('''Weather information of related days''', className='row',style={'paddingLeft': '30%'}),
