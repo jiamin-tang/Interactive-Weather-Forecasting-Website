@@ -13,7 +13,7 @@ logger = logging.Logger(__name__)
 utils.setup_logger(logger, 'data.log')
 
 
-LOCATION = 'Providence'
+LOCATION = 'New+York'
 DOWNLOAD_PERIOD = 15         # second
 
 

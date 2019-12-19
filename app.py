@@ -5,7 +5,7 @@ import numpy as np
 import plotly.graph_objects as go
 import dash_table
 import pandas as pd
-
+from data_acquire import load_forecast_data
 from database import fetch_forecast_data_as_df
 
 # Definitions of constants. This projects uses extra CSS stylesheet at `./assets/style.css`
@@ -14,6 +14,7 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', '/assets/s
 
 # Define the dash app first
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+df_daily_forecast, df_hourly_forecast = fetch_forecast_data_as_df()
 # Define component functions
 
 
@@ -61,23 +62,12 @@ def description():
         Weather data is gathered from 1st July, 2008 to present time and keeps updating.
         ''', className='eleven columns', style={'paddingLeft': '5%'})], className="row")
 
-def choose_unit():
-    return html.Div(children=[
-        dcc.Markdown('''Select a measurement unit'''),
-        dcc.RadioItems(
-                options=[
-                    {'label': 'C', 'value': 'tempC'},
-                    {'label': 'F', 'value': 'tempF'},
-                ],
-                value='tempC'
-            )
-    ],style={'width': '300px', 'marginLeft': '90px', 'display': 'inline-block'})
 
 #df_table = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/solar.csv') #Change city when available
-df_table = df_hourly_forecast
 def weather_table():
+    df_table = df_daily_forecast
     return html.Div(children=[
-        dcc.Markdown('''Weather information of related days''', className='row',style={'paddingLeft': '30%'}),
+        dcc.Markdown('''New York Weather Forecast''', className='row',style={'paddingLeft': '30%'}),
         dash_table.DataTable(
             id='table',
             columns=[{"name": i, "id": i} for i in df_table.columns],
@@ -90,9 +80,24 @@ def weather_table():
         )
     ],style={'marginTop': '2rem', 'width': '500px', 'marginLeft': '200px', 'display': 'inline-block'})
 
+def weather_table_interactive():
+    return html.Div(children=[
+        dcc.Markdown('''Weather information of related days''', className='row',style={'paddingLeft': '30%'}),
+        dash_table.DataTable(
+            id='table_interactive',
+            columns=[{"name": i, "id": i} for i in df_table.columns],
+            data=df_table.to_dict('records'),
+            style_header={'backgroundColor': 'rgb(30, 30, 30)'},
+            style_cell={
+                'backgroundColor': 'rgb(50, 50, 50)',
+                'color': 'white',
+            },
+        )
+    ],style={'marginTop': '2rem', 'width': '500px', 'marginLeft': '200px', 'display': 'inline-block'})
+
 
 df = pd.read_csv('uscities.csv')
-all_states = df['state_id'].unique()
+all_states = sorted(df['state_name'].unique())
 all_options = {state:[city for city in df[df['state_id'] == state]['city']] for state in all_states}
 def select_city():
     """Select the state and city the user wants to enquire"""
@@ -226,9 +231,9 @@ def dynamic_layout():
         page_header(),
         html.Hr(),
         description(),
-        choose_unit(),
-        select_city(),
         weather_table(),
+        select_city(),
+        weather_table_interactive(),
         # dcc.Graph(id='trend-graph', figure=static_stacked_trend_graph(stack=False)),
         #dcc.Graph(id='stacked-trend-graph', figure=daily_static_stacked_trend_graph(stack=True)),
         #what_if_description(),
@@ -251,6 +256,13 @@ def set_cities_options(selected_state):
     [dash.dependencies.Input('cities-dropdown', 'options')])
 def set_cities_value(available_options):
     return available_options[0]['value']
+
+@app.callback(
+    dash.dependencies.Output('table_interactive', 'data'),
+    [dash.dependencies.Input('cities-dropdown', "value")])
+def update_table(city):
+    df_table_interactive, df_hourly_forecast = load_forecast_data(city)
+    return df_table_interactive.to_dict('records')
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=1050, host='0.0.0.0')
