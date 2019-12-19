@@ -203,10 +203,10 @@ def load_forecast_data(location, num_of_days=7, num_of_hours=24):
         day_data.append(day_weather['astronomy'][0]['moonset'])
         day_data.append(day_weather['astronomy'][0]['moon_phase'])
         day_data.append(day_weather['astronomy'][0]['moon_illumination'])
-        day_data.append(day_weather['maxtempC'])
-        day_data.append(day_weather['maxtempF'])
-        day_data.append(day_weather['mintempC'])
-        day_data.append(day_weather['mintempF'])
+        tempC = '{} ~ {}'.format(day_weather['mintempC'], day_weather['maxtempC'])
+        tempF = '{} ~ {}'.format(day_weather['mintempF'], day_weather['maxtempF'])
+        day_data.append(tempC)
+        day_data.append(tempF)
         day_data.append(day_weather['sunHour'])
         day_data.append(day_weather['uvIndex'])
         res_daily_data.append(day_data)
@@ -235,8 +235,7 @@ def load_forecast_data(location, num_of_days=7, num_of_hours=24):
                     break
 
     df_daily_forecast = pd.DataFrame(res_daily_data, columns = ['city', 'datetime', 'sunrise', 'sunset', 'moonrise', 'moonset', 'moon_phase',
-                                                                'moon_illumination', 'maxtempC', 'maxtempF', 'mintempC', 'mintempF',
-                                                                'sunHour', 'uvIndex'])
+                                                                'moon_illumination', 'tempC', 'tempF', 'sunHour', 'uvIndex'])
     df_hourly_forecast = pd.DataFrame(res_hourly_data, columns = ['current', 'city', 'datetime', 'tempC', 'tempF', 'precipMM', 'uvIndex'])
     return df_daily_forecast, df_hourly_forecast
 
