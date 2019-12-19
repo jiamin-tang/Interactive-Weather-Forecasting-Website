@@ -89,19 +89,20 @@ def upsert_forecast_data(df_daily_forecast, df_hourly_forecast):
 
     update_count_hourly = 0
     for record in df_hourly_forecast.to_dict('records'):
-        result = collection_hourly.replace_one(
-            filter={'$or': [{'city': record['city'], 'datetime': record['datetime']}, {'current': True}]},    # locate the document if exists
+        result1 = collection_hourly.replace_one(
+            filter={'city': record['city'], 'datetime': record['datetime']},    # locate the document if exists
             replacement=record,                         # latest document
             upsert=True)                                # update if exists, insert if not
-        if result.matched_count > 0:
+        if result1.matched_count > 0:
             update_count_hourly += 1
 
-        result = collection_hourly.replace_one(
-            filter={'current':True},                    # locate the document if exists
-            replacement=record,                         # latest document
-            upsert=True)                                # update if exists, insert if not
-        if result.matched_count > 0:
-            update_count_hourly += 1
+        if record['current']:
+            result2 = collection_hourly.replace_one(
+                filter={'current': True},                    # locate the document if exists
+                replacement=record,                         # latest document
+                upsert=True)                                # update if exists, insert if not
+            if result2.matched_count > 0 and result1.matched_count <= 0:
+                update_count_hourly += 1
     logger.info("Hourly forecast weather: rows={}, update={}, ".format(df_hourly_forecast.shape[0], update_count_hourly) +
                 "insert={}".format(df_hourly_forecast.shape[0]-update_count_hourly))
 
