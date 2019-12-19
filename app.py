@@ -14,7 +14,6 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', '/assets/s
 
 # Define the dash app first
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-df_daily_forecast, df_hourly_forecast = fetch_forecast_data_as_df()
 # Define component functions
 
 
@@ -63,16 +62,25 @@ def description():
         ''', className='eleven columns', style={'paddingLeft': '5%'})], className="row")
 
 
+def extract_weekday(date_time):
+    dict_weekday = {0:'Monday', 1:'Tuesday', 2:'Wednesday', 3:'Thursday', 4:'Friday', 5:'Saturday', 6:'Sunday'}
+    return dict_weekday[date_time.weekday()]
+
+def display_date(date_time):
+    return date_time.strftime(format='%Y-%m-%d')
+
+
 #df_table = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/solar.csv') #Change city when available
-df_table = df_daily_forecast
 def weather_table():
-    #df_static_table.drop
+    df_static_daily_forecast = fetch_forecast_data_as_df()[0]
+    df_static_daily_forecast['weekday'] = df_static_daily_forecast['datetime'].apply(extract_weekday)
+    df_static_daily_forecast['datetime'] = df_static_daily_forecast['datetime'].apply(display_date)
     return html.Div(children=[
         dcc.Markdown('''New York Weather Forecast''', className='row',style={'paddingLeft': '30%'}),
         dash_table.DataTable(
             id='table',
-            columns=[{"name": i, "id": i} for i in df_table.columns],
-            data=df_table.to_dict('records'),
+            columns=[{"name": i, "id": i} for i in df_static_daily_forecast.columns],
+            data=df_static_daily_forecast.to_dict('records'),
             style_header={'backgroundColor': 'rgb(30, 30, 30)'},
             style_cell={
                 'backgroundColor': 'rgb(50, 50, 50)',

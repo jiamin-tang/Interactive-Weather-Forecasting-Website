@@ -249,5 +249,7 @@ def main_loop(timeout=DOWNLOAD_PERIOD):
     scheduler.run(blocking=True)
 
 if __name__ == '__main__':
-    main_loop()
+    df_daily_forecast, df_hourly_forecast = load_forecast_data('providence')
+    df_daily_forecast.to_csv('daily_weather.csv')
+    #main_loop()
 
