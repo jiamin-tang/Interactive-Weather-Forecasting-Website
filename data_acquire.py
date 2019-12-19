@@ -145,7 +145,7 @@ def load_forecast_data(location, num_of_days=7, num_of_hours=24):
 
     interval = 1
     url = 'http://api.worldweatheronline.com/premium/v1/weather.ashx'
-    key = 'ddc7eb4778ba48e69e825031190612'
+    key = '81c54dc8a648471db8125046190612'
     fm = 'json'
     show_comments = 'no'
     show_local_time = 'yes'
