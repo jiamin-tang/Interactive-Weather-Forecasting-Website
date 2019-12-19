@@ -165,7 +165,6 @@ def load_forecast_data(location, num_of_days=7, num_of_hours=24):
     res_daily_data = []
 
     r = res.json()
-    city = r['data']['request'][0]['query']
     curr_time = r['data']['time_zone'][0]['localtime']
     curr_datetime = pd.to_datetime(curr_time, format='%Y-%m-%d %H:%M')
     curr_condition = r['data']['current_condition'][0]
@@ -175,7 +174,6 @@ def load_forecast_data(location, num_of_days=7, num_of_hours=24):
 
     hourly_data = []
     hourly_data.append(True)
-    hourly_data.append(city)
     hourly_data.append(curr_datetime)
     hourly_data.append(curr_condition['temp_C'])
     hourly_data.append(curr_condition['temp_F'])
@@ -213,7 +211,6 @@ def load_forecast_data(location, num_of_days=7, num_of_hours=24):
                 result_hour = result_hourly[hour]
                 hourly_data = []
                 hourly_data.append(False)
-                hourly_data.append(city)
                 date_time = '{}-{}'.format(day_weather['date'], hour)
                 hourly_data.append(pd.to_datetime(date_time, format='%Y-%m-%d-%H'))
                 hourly_data.append(result_hour['tempC'])
@@ -226,9 +223,9 @@ def load_forecast_data(location, num_of_days=7, num_of_hours=24):
                     need_hour_data = False
                     break
 
-    df_daily_forecast = pd.DataFrame(res_daily_data, columns = ['city', 'datetime', 'sunrise', 'sunset', 'moonrise', 'moonset', 'moon_phase',
+    df_daily_forecast = pd.DataFrame(res_daily_data, columns = ['datetime', 'sunrise', 'sunset', 'moonrise', 'moonset', 'moon_phase',
                                                                 'moon_illumination', 'tempC', 'tempF', 'sunHour', 'uvIndex'])
-    df_hourly_forecast = pd.DataFrame(res_hourly_data, columns = ['current', 'city', 'datetime', 'tempC', 'tempF', 'precipMM', 'uvIndex'])
+    df_hourly_forecast = pd.DataFrame(res_hourly_data, columns = ['current', 'datetime', 'tempC', 'tempF', 'precipMM', 'uvIndex'])
     return df_daily_forecast, df_hourly_forecast
 
 
@@ -252,7 +249,5 @@ def main_loop(timeout=DOWNLOAD_PERIOD):
     scheduler.run(blocking=True)
 
 if __name__ == '__main__':
-    #main_loop()
-    df_daily_forecast, df_hourly_forecast = load_forecast_data('Providence')
-    upsert_forecast_data(df_daily_forecast, df_hourly_forecast)
+    main_loop()
 
