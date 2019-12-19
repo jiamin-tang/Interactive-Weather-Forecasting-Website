@@ -274,5 +274,5 @@ class data_acquire:
         scheduler.run(blocking=True)
 
 if __name__ == '__main__':
-    #data_acquire.main_loop()
+    data_acquire.main_loop()
 
