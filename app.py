@@ -66,7 +66,7 @@ def description():
 #df_table = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/solar.csv') #Change city when available
 df_table = df_daily_forecast
 def weather_table():
-    df_static_table.drop
+    #df_static_table.drop
     return html.Div(children=[
         dcc.Markdown('''New York Weather Forecast''', className='row',style={'paddingLeft': '30%'}),
         dash_table.DataTable(
@@ -109,7 +109,7 @@ def select_city():
         dcc.Dropdown(
             id='states-dropdown',
             options=[{'label': k, 'value': k} for k in all_options.keys()],
-            value='RI',
+            value='',
             multi=False,
             style={'height': '30px', 'width': '300px'}
         )], style={'width': '300px', 'marginLeft': '90px', 'display': 'inline-block'}),
