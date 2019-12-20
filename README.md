@@ -1,6 +1,5 @@
-# Energy Planner
-> DATA1050 Example Project Fall 19
+# DATA1050 Final Project
+## Weather Exploration with Air Quality
 
-
-https://docs.google.com/document/d/1uwpXgpEZpacViosYREnze5MGQFuVhMaRtYixxmIKXBU/edit#
+Created by Jiamin Tang, Qinyun Wu, Zeyan Du, Yiwei Sang
 

@@ -270,6 +270,7 @@ def set_cities_value(available_options):
     [dash.dependencies.Input('cities-dropdown', "value")])
 def update_table(city):
     df_interactive_daily_forecast, df_interactive_hourly_forecast = load_forecast_data(city)
+    df_interactive_daily_forecast['datetime'] = df_interactive_daily_forecast['datetime'].apply(display_date)
     return df_interactive_daily_forecast.to_dict('records')
 
 @app.callback(
