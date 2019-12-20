@@ -49,11 +49,6 @@ def description():
         Accurate weather forecast helps ensure that we are prepared for the upcoming affairs. In this
         case, our tool offers queries about cities in the United States. We provide both forecast in
         next 24 hours and in the following 10 days to help you make better decisions.
-
-        Except for weather-related business, weather also has something to do with weather itself. We
-        look into air quality, more specifically, PM2.5, which is the air index that people care about
-        the most nowadays. We aim to explore if the combinations of weather features are strongly 
-        associated with air quality.
         
         ### Data Source
         In this case, we stay ahead of weather conditions through API from [World Weather Online]
@@ -70,7 +65,7 @@ def weather_table():
     df_static_daily_forecast = fetch_forecast_data_as_df()[0]
     df_static_daily_forecast['datetime'] = df_static_daily_forecast['datetime'].apply(display_date)
     return html.Div(children=[
-        dcc.Markdown('''New York Weather Forecast''', className='row',style={'paddingLeft': '30%'}),
+        dcc.Markdown('''New York Weather Forecast''', className='row',style={'paddingLeft': '50%'}),
         dash_table.DataTable(
             id='table',
             columns=[{"name": i, "id": i} for i in df_static_daily_forecast.columns],
@@ -86,9 +81,8 @@ def weather_table():
 
 def hourly_static_stacked_trend_graph(stack=False):
     """
-    Returns scatter line plot of all power sources and power load.
-    If `stack` is `True`, the 4 power sources are stacked together to show the overall power
-    production.
+    Returns scatter line plot of related weather features.
+    If `stack` is `True`, the 4 features are stacked together.
     """
     df_static_hourly_forecast = fetch_forecast_data_as_df()[1]
     if df_static_hourly_forecast is None:
@@ -126,7 +120,7 @@ def weather_table_interactive():
                 'color': 'white',
             },
         )
-    ],style={'marginTop': '2rem', 'width': '500px', 'marginLeft': '200px', 'display': 'inline-block'})
+    ],style={'marginTop': '2rem', 'width': '800px', 'marginLeft': '200px', 'display': 'inline-block'})
 
 
 df = pd.read_csv('uscities.csv')
@@ -153,6 +147,19 @@ def select_city():
             style={'height': '30px', 'width': '300px'}
         )], style={'width': '300px', 'align': 'right', 'marginLeft': '400px', 'display': 'inline-block'})
         ])])
+
+
+def enhance_des():
+    """
+    Returns enhancement description in markdown
+    """
+    return html.Div(children=[dcc.Markdown('''
+        # Explorations
+        Except for weather-related business, weather also has something to do with weather itself. We
+        look into air quality, more specifically, PM2.5, which is the air index that people care about
+        the most nowadays. We aim to explore if the weather features including different measurements
+        of temperature, sunhours and uvindex are strongly associated with air quality.
+        ''', className='eleven columns', style={'paddingLeft': '5%'})], className="row")
 
 def process_datetime(date_time):
     return date_time.strftime(format='%Y-%m-%d')
@@ -181,10 +188,10 @@ def enhancement():
                     value=''
                 ),
             ],
-            style={'width': '48%', 'display': 'inline-block'}),
+            style={'paddingLeft': '5%','width': '48%', 'display': 'inline-block'}),
         ]),
 
-        dcc.Graph(id='indicator-graphic'),
+        dcc.Graph(id='indicator-graphic',style={'marginTop': '2rem','height': '400px','paddingLeft': '5%','width': '90%'}),
 
         dcc.Slider(
             id='year--slider',
@@ -233,6 +240,7 @@ def dynamic_layout():
         dcc.Graph(id='stacked-trend-graph', figure=hourly_static_stacked_trend_graph(True)),
         select_city(),
         weather_table_interactive(),
+        enhance_des(),
         enhancement(),
         # dcc.Graph(id='trend-graph', figure=static_stacked_trend_graph(stack=False)),
         #dcc.Graph(id='stacked-trend-graph', figure=daily_static_stacked_trend_graph(stack=True)),
@@ -296,4 +304,4 @@ def update_graph(xaxis_column_name, year_value):
     }
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=1050, host='0.0.0.0')
+    app.run_server(debug=False, port=1050, host='0.0.0.0')
