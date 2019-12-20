@@ -24,6 +24,7 @@ def page_header():
     return html.Div(id='header', children=[
         html.Div([html.H3('Weather Exploration with Air Quality')],
                  className="ten columns"),
+
         html.A([html.Img(id='logo', src=app.get_asset_url('github.png'),
                          style={'height': '35px', 'paddingTop': '7%'}),
                 html.Span('Shake Shake', style={'fontSize': '2rem', 'height': '35px', 'bottom': 0,
@@ -31,6 +32,19 @@ def page_header():
                                                 'textDecoration': 'none'})],
                className="two columns row",
                href='https://github.com/yiweisang97/data1050-final-project-shake-shake/'),
+        
+        html.Div(children=[dcc.Markdown('''
+        Developed by 
+        Yiwei Sang, 
+        Jiamin Tang, 
+        Qinyun Wu, 
+        Zeyan Du
+        ''', className='eleven columns', style={'paddingLeft': '5%'})], className="row"),
+
+        html.Div(children=[dcc.Markdown('''
+        [About Page](https://docs.google.com/document/d/1k4v4rgel3_xJdulQ0ch_x7ybQcCo2DULQ81QOnYUShU/edit), 
+        [Additional Details](https://docs.google.com/document/d/18XoGPsdgbGC5XbXeA5Yrj0VoRzE6wc47bA8wkq61qhU/edit?usp=sharing)
+        ''', className='eleven columns', style={'paddingLeft': '5%'})], className="row")
     ], className="row")
 
 
