@@ -1,5 +1,3 @@
-# DATA1050 Final Project
-## Weather Exploration with Air Quality
+# Weather Exploration with Air Quality
 
-Created by Jiamin Tang, Qinyun Wu, Zeyan Du, Yiwei Sang
-
+This project created an user-interactive website with Python Dash offering queries about both hourly and 7-day weather forecast in US cities; visualized the correlations between different weather features and air quality with interactive sliders. It established a well-organized pipeline for data ETL including acquiring weather data through APIs, transforming the data into Pandas Data Frame after preprocessing and storing it in a MongoDB database which kept updating every 15 seconds. It is a group project created by Jiamin Tang, Qinyun Wu, Zeyan Du and Yiwei Sang.
